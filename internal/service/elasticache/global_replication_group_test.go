@@ -496,7 +496,7 @@ resource "aws_subnet" "%[1]s" {
   provider = %[2]s
 
   count = %[4]d
-	
+
   vpc_id            = aws_vpc.%[1]s.id
   cidr_block        = "192.168.${count.index}.0/24"
   availability_zone = data.aws_availability_zones.%[1]s.names[count.index]
@@ -504,7 +504,7 @@ resource "aws_subnet" "%[1]s" {
 
 resource "aws_elasticache_subnet_group" "%[1]s" {
   provider = %[2]s
-	
+
   name       = %[3]q
   subnet_ids = aws_subnet.%[1]s[*].id
 }

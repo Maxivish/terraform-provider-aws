@@ -8,14 +8,13 @@ require (
 	github.com/client9/misspell v0.3.4
 	github.com/golangci/golangci-lint v1.42.1
 	github.com/hashicorp/go-changelog v0.0.0-20201005170154-56335215ce3a
-	github.com/hashicorp/terraform-exec v0.14.0 // indirect
 	github.com/katbyte/terrafmt v0.3.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.32.1
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf // indirect
 )
 
-replace github.com/katbyte/terrafmt => github.com/gdavison/terrafmt v0.3.1-0.20210204054728-84242796be99
+replace github.com/katbyte/terrafmt => github.com/gdavison/terrafmt v0.3.1-0.20211025213519-95e34c37044b
 
 replace github.com/hashicorp/go-changelog => github.com/breathingdust/go-changelog v0.0.0-20210127001721-f985d5709c15
 

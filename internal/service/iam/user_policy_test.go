@@ -382,7 +382,7 @@ resource "aws_iam_user" "user_%[1]s" {
 
 resource "aws_iam_user_policy" "foo_%[1]s" {
   name = "tf_test_policy_test_%[1]s"
-  user = "${aws_iam_user.user_%[1]s.name}"
+  user = aws_iam_user.user_%[1]s.name
 
   policy = <<EOF
 {

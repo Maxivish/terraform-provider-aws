@@ -610,7 +610,7 @@ func testAccAppsyncResolver_ResponseTemplate(rName string, statusCode int) strin
 	return fmt.Sprintf(`
 resource "aws_appsync_graphql_api" "test" {
   authentication_type = "API_KEY"
-  name                = %q
+  name                = %[1]q
 
   schema = <<EOF
 type Mutation {
@@ -635,7 +635,7 @@ EOF
 
 resource "aws_appsync_datasource" "test" {
   api_id = aws_appsync_graphql_api.test.id
-  name   = %q
+  name   = %[1]q
   type   = "HTTP"
 
   http_config {
@@ -662,14 +662,14 @@ resource "aws_appsync_resolver" "test" {
 EOF
 
   response_template = <<EOF
-#if($ctx.result.statusCode == %d)
+#if($ctx.result.statusCode == %[2]d)
     $ctx.result.body
 #else
     $utils.appendError($ctx.result.body, $ctx.result.statusCode)
 #end
 EOF
 }
-`, rName, rName, statusCode)
+`, rName, statusCode)
 }
 
 func testAccAppsyncResolver_multipleResolvers(rName string) string {
@@ -681,10 +681,11 @@ func testAccAppsyncResolver_multipleResolvers(rName string) string {
 `, i)
 		resolverResources = resolverResources + fmt.Sprintf(`
 resource "aws_appsync_resolver" "test%d" {
-  api_id           = "${aws_appsync_graphql_api.test.id}"
-  field            = "singlePost%d"
-  type             = "Query"
-  data_source      = "${aws_appsync_datasource.test.name}"
+  api_id      = aws_appsync_graphql_api.test.id
+  field       = "singlePost%d"
+  type        = "Query"
+  data_source = aws_appsync_datasource.test.name
+
   request_template = <<EOF
 {
     "version": "2018-05-29",
@@ -695,6 +696,7 @@ resource "aws_appsync_resolver" "test%d" {
     }
 }
 EOF
+
   response_template = <<EOF
 #if($ctx.result.statusCode == 200)
     $ctx.result.body

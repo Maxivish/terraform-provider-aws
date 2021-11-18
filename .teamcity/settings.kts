@@ -13,14 +13,14 @@ val defaultRegion = DslContext.getParameter("default_region")
 val alternateRegion = DslContext.getParameter("alternate_region", "")
 val acmCertificateRootDomain = DslContext.getParameter("acm_certificate_root_domain", "")
 val sweeperRegions = DslContext.getParameter("sweeper_regions")
-val awsAccountID = DslContext.getParameter("aws_account_id")
-val awsAccessKeyID = DslContext.getParameter("aws_access_key_id")
-val awsSecretAccessKey = DslContext.getParameter("aws_secret_access_key")
+val awsAccountID = DslContext.getParameter("aws_account.account_id")
+val awsAccessKeyID = DslContext.getParameter("aws_account.access_key_id")
+val awsSecretAccessKey = DslContext.getParameter("aws_account.secret_access_key")
 val acctestParallelism = DslContext.getParameter("acctest_parallelism")
 val tfAccAssumeRoleArn = DslContext.getParameter("tf_acc_assume_role_arn", "")
-val awsAlternateAccountID = DslContext.getParameter("aws_alternate_account_id", "")
-val awsAlternateAccessKeyID = DslContext.getParameter("aws_alternate_access_key_id", "")
-val awsAlternateSecretAccessKey = DslContext.getParameter("aws_alternate_secret_access_key", "")
+val awsAlternateAccountID = DslContext.getParameter("aws_alternate_account.account_id", "")
+val awsAlternateAccessKeyID = DslContext.getParameter("aws_alternate_account.access_key_id", "")
+val awsAlternateSecretAccessKey = DslContext.getParameter("aws_alternate_account.secret_access_key", "")
 
 project {
     buildType(FullBuild)
@@ -97,15 +97,18 @@ object PullRequest : BuildType({
             name = "Setup GOENV"
             scriptContent = File("./scripts/setup_goenv.sh").readText()
         }
-
+        script {
+            name = "Run Tests"
+            scriptContent = File("./scripts/pullrequest_tests/tests.sh").readText()
+        }
     }
 
     features {
         feature {
             type = "JetBrains.SharedResources"
-            param("locks-param", "${DslContext.getParameter("account_lock_id")} readLock")
+            param("locks-param", "${DslContext.getParameter("aws_account.lock_id")} readLock")
         }
-        val alternateAccountLockId = DslContext.getParameter("alternate_account_lock_id", "")
+        val alternateAccountLockId = DslContext.getParameter("aws_alternate_account.lock_id", "")
         if (alternateAccountLockId != "") {
             feature {
                 type = "JetBrains.SharedResources"
@@ -178,9 +181,9 @@ object FullBuild : BuildType({
     features {
         feature {
             type = "JetBrains.SharedResources"
-            param("locks-param", "${DslContext.getParameter("account_lock_id")} writeLock")
+            param("locks-param", "${DslContext.getParameter("aws_account.lock_id")} writeLock")
         }
-        val alternateAccountLockId = DslContext.getParameter("alternate_account_lock_id", "")
+        val alternateAccountLockId = DslContext.getParameter("aws_alternate_account.lock_id", "")
         if (alternateAccountLockId != "") {
             feature {
                 type = "JetBrains.SharedResources"

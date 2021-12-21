@@ -17,12 +17,12 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/verify"
 )
 
-func Resource{{.name | ToTitle}}() *schema.Resource {
+func Resource{{.name | Title}}() *schema.Resource {
 	return &schema.Resource{
-		Create: resource{{.name | ToTitle}}Create,
-		Read:   resource{{.name | ToTitle}}Read,
-		Update: resource{{.name | ToTitle}}Update,
-		Delete: resource{{.name | ToTitle}}Delete,
+		Create: resource{{.name | Title}}Create,
+		Read:   resource{{.name | Title}}Read,
+		Update: resource{{.name | Title}}Update,
+		Delete: resource{{.name | Title}}Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -31,27 +31,27 @@ func Resource{{.name | ToTitle}}() *schema.Resource {
   }
 }
 
-func resource{{.name | ToTitle}}Create(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(*conns.AWSClient).{{.pkg}}Conn
+func resource{{.name | Title}}Create(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*conns.AWSClient).{{.pkg | Title}}Conn
 
-	return resource{{.name | ToTitle}}Read(d, meta)  
+	return resource{{.name | Title}}Read(d, meta)  
 }
 
 
-func resource{{.name | ToTitle}}Read(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(*conns.AWSClient).{{.pkg}}Conn
+func resource{{.name | Title}}Read(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*conns.AWSClient).{{.pkg | Title}}Conn
 
 	return nil  
 }
 
-func resource{{.name | ToTitle}}Update(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(*conns.AWSClient).{{.pkg}}Conn
+func resource{{.name | Title}}Update(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*conns.AWSClient).{{.pkg | Title}}Conn
 
-	return resource{{.name | ToTitle}}Read(d, meta)
+	return resource{{.name | Title}}Read(d, meta)
 }
 
-func resource{{.name | ToTitle}}Delete(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(*conns.AWSClient).{{.pkg}}Conn
+func resource{{.name | Title}}Delete(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*conns.AWSClient).{{.pkg | Title}}Conn
 
 	return nil
 }

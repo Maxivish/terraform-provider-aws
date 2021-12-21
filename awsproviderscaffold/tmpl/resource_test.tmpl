@@ -1,0 +1,44 @@
+
+package {{ .pkg }}_test
+
+import (
+	"encoding/base64"
+	"fmt"
+	"os"
+	"regexp"
+	"testing"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/{{ .pkg }}"
+	sdkacctest "github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
+	"github.com/hashicorp/terraform-provider-aws/internal/conns"
+	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
+)
+
+func testAcc{{.name | Title}}_basic(t *testing.T) {
+	var app {{ .pkg}}.{{.name | Title}}
+	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	resourceName := "aws_{{.pkg}}_{{.name}}.test"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { acctest.PreCheck(t); testAccPreCheck(t) },
+		ErrorCheck:   acctest.ErrorCheck(t, {{.pkg}}.EndpointsID),
+		Providers:    acctest.Providers,
+		CheckDestroy: testAccCheckAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAppNameConfig(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

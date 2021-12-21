@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -8,39 +9,24 @@ import (
 	"text/template"
 )
 
+type TemplateType int64
+
+const (
+	Resource TemplateType = iota
+	Test
+)
+
 type ResourceCommand struct {
 }
 
 func (c *ResourceCommand) Run(args []string) int {
+	//TODO Flag to include tag boilerplate
 	pkg := ""
 	name := ""
-	//dir := ""
-
-	pwd, _ := os.Getwd()
-
-	filepath.Join(pwd, "tmpl/resource.tmpl")
 
 	if len(args) > 0 {
 		pkg = args[0]
 		name = args[1]
-		//dir = args[2]
-	}
-
-	funcMap := template.FuncMap{
-		"ToTitle": strings.Title,
-	}
-
-	t, err := template.New("resource.tmpl").Funcs(funcMap).ParseFiles(filepath.Join(pwd, "tmpl/resource.tmpl"))
-
-	if err != nil {
-		log.Print(err)
-		return 1
-	}
-
-	f, err := os.Create(filepath.Join(pwd, "..", "internal", "service", pkg, name+".go"))
-	if err != nil {
-		log.Println("create file: ", err)
-		return 1
 	}
 
 	config := map[string]string{
@@ -48,14 +34,53 @@ func (c *ResourceCommand) Run(args []string) int {
 		"name": name,
 	}
 
+	createResourceFiles(config)
+
+	return 0
+}
+
+func createResourceFiles(config map[string]string) error {
+	execTemplate("resource", Resource, config)
+	execTemplate("resource", Test, config)
+	return nil
+}
+
+func execTemplate(tmpl string, tmplType TemplateType, config map[string]string) error {
+	pwd, _ := os.Getwd()
+
+	funcMap := template.FuncMap{
+		"Title": strings.Title,
+	}
+
+	suffix := ""
+
+	if tmplType == Test {
+		suffix = "_test"
+	}
+
+	tmpl = fmt.Sprintf("%s%s.tmpl", tmpl, suffix)
+
+	t, err := template.New(tmpl).Funcs(funcMap).ParseFiles(filepath.Join(pwd, fmt.Sprintf("tmpl/%s", tmpl)))
+
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	f, err := os.Create(filepath.Join(pwd, "..", "internal", "service", config["pkg"], config["name"]+suffix+".go"))
+	if err != nil {
+		log.Println("create file: ", err)
+		return err
+	}
+
 	err = t.Execute(f, config)
 	if err != nil {
 		log.Print("execute: ", err)
-		return 1
+		return err
 	}
 	f.Close()
 
-	return 0
+	return nil
 }
 
 func (c *ResourceCommand) Synopsis() string {

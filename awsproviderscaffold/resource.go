@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -17,26 +18,43 @@ const (
 )
 
 type ResourceCommand struct {
+	flagPkg  string
+	flagName string
 }
 
 func (c *ResourceCommand) Run(args []string) int {
 	//TODO Flag to include tag boilerplate
-	pkg := ""
-	name := ""
+	//TODO Validate pkg name exists.
 
-	if len(args) > 0 {
-		pkg = args[0]
-		name = args[1]
+	c.Flags().Parse(args)
+
+	if c.flagPkg == "" {
+		log.Println("Package name must be specified: ")
+		return 1
+	}
+
+	if c.flagName == "" {
+		log.Println("Resource name must be specified: ")
+		return 1
 	}
 
 	config := map[string]string{
-		"pkg":  pkg,
-		"name": name,
+		"pkg":  c.flagPkg,
+		"name": c.flagName,
 	}
 
 	createResourceFiles(config)
 
 	return 0
+}
+
+func (c *ResourceCommand) Flags() *flag.FlagSet {
+	f := flag.NewFlagSet("resource", flag.ContinueOnError)
+
+	f.StringVar(&c.flagPkg, "pkg", "", "Name of AWS Go SDK service package name which contains the API endpoints to be used by the resource.")
+	f.StringVar(&c.flagName, "name", "", "Name of the Terraform Resource you wish to create.")
+
+	return f
 }
 
 func createResourceFiles(config map[string]string) error {
@@ -88,5 +106,9 @@ func (c *ResourceCommand) Synopsis() string {
 }
 
 func (c *ResourceCommand) Help() string {
-	return "halp"
+	helpText := `
+Usage: awsproviderscaffold resource [options] 
+Creates a templated resource belonging to an AWS service package.` + c.Flags().Usage
+
+	return strings.TrimSpace(helpText)
 }

@@ -1,0 +1,57 @@
+package {{.pkg}}
+
+import (
+	"fmt"
+	"log"
+	"regexp"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/{{.pkg}}"
+	"github.com/hashicorp/aws-sdk-go-base/tfawserr"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-provider-aws/internal/conns"
+	"github.com/hashicorp/terraform-provider-aws/internal/flex"
+	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
+	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
+	"github.com/hashicorp/terraform-provider-aws/internal/verify"
+)
+
+func Resource{{.name | ToTitle}}() *schema.Resource {
+	return &schema.Resource{
+		Create: resource{{.name | ToTitle}}Create,
+		Read:   resource{{.name | ToTitle}}Read,
+		Update: resource{{.name | ToTitle}}Update,
+		Delete: resource{{.name | ToTitle}}Delete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
+		Schema: map[string]*schema.Schema{
+    },
+  }
+}
+
+func resource{{.name | ToTitle}}Create(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*conns.AWSClient).{{.pkg}}Conn
+
+	return resource{{.name | ToTitle}}Read(d, meta)  
+}
+
+
+func resource{{.name | ToTitle}}Read(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*conns.AWSClient).{{.pkg}}Conn
+
+	return nil  
+}
+
+func resource{{.name | ToTitle}}Update(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*conns.AWSClient).{{.pkg}}Conn
+
+	return resource{{.name | ToTitle}}Read(d, meta)
+}
+
+func resource{{.name | ToTitle}}Delete(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*conns.AWSClient).{{.pkg}}Conn
+
+	return nil
+}

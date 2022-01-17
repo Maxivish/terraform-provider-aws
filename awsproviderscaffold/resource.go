@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"log"
 	"os"
@@ -131,7 +132,32 @@ Creates a templated resource belonging to an AWS service package.
 	return helpText
 }
 
+func Entry() (a *ast.KeyValueExpr) {
+
+	thing := &ast.KeyValueExpr{}
+
+	thing.Key = &ast.BasicLit{
+		Kind:  token.STRING,
+		Value: "\"aws_acm_test\"",
+	}
+
+	thing.Value = &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "acm",
+			},
+			Sel: &ast.Ident{
+				Name: "DataSourceCertificate",
+			},
+		},
+	}
+	return thing
+}
+
 func (c *ResourceCommand) Parse() string {
+	// find target map datasource/resource
+	// find target pkg position
+	//   if exists add
 
 	pkg := "s3"
 	resource := "aws_s3_zoo"
@@ -145,76 +171,31 @@ func (c *ResourceCommand) Parse() string {
 	var stack []ast.Node
 
 	ast.Inspect(file, func(n ast.Node) bool {
-		// s := ""
-		// switch x := n.(type) {
-		// case *ast.Ident:
-		// 	s = x.Name
-
-		// 	// Called recursively.
-		// 	if s == "DataSourcesMap" {
-		// 		ast.Print(fset, n)
-		// 		return false
-		// 	}
-		// }
-		// return true
-
 		if n, ok := n.(*ast.Ident); ok {
 			if n.Name == "DataSourcesMap" {
-
 				dsMap := stack[len(stack)-1]
 
-				var thing ast.Expr
-				switch x := dsMap.(type) {
-				case *ast.KeyValueExpr:
-					thing = x.Value
-				}
-
-				var thng ast.CompositeLit
-
-				switch x := thing.(type) {
-				case *ast.CompositeLit:
-					thng = *x
-				}
+				keyValueExpr := dsMap.(*ast.KeyValueExpr)
+				resourceMap := keyValueExpr.Value.(*ast.CompositeLit)
 
 				var pkgRes = make(map[string]int)
 
 			out:
-				for i := 0; i < len(thng.Elts); i++ {
-					var top ast.KeyValueExpr
-					switch x := thng.Elts[i].(type) {
-					case *ast.KeyValueExpr:
-						top = *x
+				for i := 0; i < len(resourceMap.Elts); i++ {
+
+					keyValueExpr = resourceMap.Elts[i].(*ast.KeyValueExpr)
+
+					key := keyValueExpr.Key.(*ast.BasicLit)
+					value := keyValueExpr.Value.(*ast.CallExpr)
+
+					selectorExpr := value.Fun.(*ast.SelectorExpr)
+					resourcePackage := selectorExpr.X.(*ast.Ident)
+
+					if resourcePackage.Name == pkg {
+						pkgRes[key.Value[1:len(key.Value)-1]] = i
 					}
 
-					var lit ast.BasicLit
-					switch x := top.Key.(type) {
-					case *ast.BasicLit:
-						lit = *x
-					}
-
-					var call ast.CallExpr
-					switch x := top.Value.(type) {
-					case *ast.CallExpr:
-						call = *x
-					}
-
-					var sel ast.SelectorExpr
-					switch x := call.Fun.(type) {
-					case *ast.SelectorExpr:
-						sel = *x
-					}
-
-					var ide ast.Ident
-					switch x := sel.X.(type) {
-					case *ast.Ident:
-						ide = *x
-					}
-
-					if ide.Name == pkg {
-						pkgRes[lit.Value[1:len(lit.Value)-1]] = i
-					}
-
-					if ide.Name != pkg && len(pkgRes) > 0 {
+					if resourcePackage.Name != pkg && len(pkgRes) > 0 {
 						keys := make([]string, 0, len(pkgRes))
 						for k := range pkgRes {
 							keys = append(keys, k)
@@ -224,40 +205,36 @@ func (c *ResourceCommand) Parse() string {
 
 						j := 0
 						for _, key := range keys {
-							//log.Println(key)
 							j++
 							if key > resource || j == len(pkgRes) {
-								log.Printf("%d %d", j, len(pkgRes))
-								log.Printf("%s %s %d", key, resource, pkgRes[key])
+
+								resourceMap.Elts = insert(resourceMap.Elts, pkgRes[key], Entry())
 								break out
 							}
 						}
-						//break out
-
 					}
-
 				}
-
-				//log.Println(thng.Elts)
-
 			}
 		}
 
-		// Manage the stack. Inspect calls a function like this:
-		//   f(node)
-		//   for each child {
-		//      f(child) // and recursively for child's children
-		//   }
-		//   f(nil)
 		if n == nil {
-			// Done with node's children. Pop.
 			stack = stack[:len(stack)-1]
 		} else {
-			// Push the current node for children.
 			stack = append(stack, n)
 		}
 
 		return true
 	})
+	printer.Fprint(os.Stdout, fset, file)
+
 	return ""
+}
+
+func insert(a []ast.Expr, index int, value ast.Expr) []ast.Expr {
+	if len(a) == index { // nil or empty slice or after last element
+		return append(a, value)
+	}
+	a = append(a[:index+1], a[index:]...) // index < len(a)
+	a[index] = value
+	return a
 }

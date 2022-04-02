@@ -13,6 +13,7 @@ echo "Local Go version: ${go_version}"
 if [ -n "$GO_VERSION" ]; then
   echo "\$GO_VERSION: ${GO_VERSION}"
   go_version=$GO_VERSION
+  goenv local "$GO_VERSION"
 fi
 
 echo "Installing Go version $go_version..."

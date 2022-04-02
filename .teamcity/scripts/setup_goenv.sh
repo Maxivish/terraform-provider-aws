@@ -10,7 +10,7 @@ popd
 go_version=$(goenv local 2>/dev/null)
 echo "Local Go version: ${go_version}"
 
-if [ -z "$GO_VERSION" ]; then
+if [ -n "$GO_VERSION" ]; then
   echo "\$GO_VERSION: ${GO_VERSION}"
   go_version=$GO_VERSION
 fi

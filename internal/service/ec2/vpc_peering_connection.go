@@ -134,7 +134,8 @@ func resourceVPCPeeringConnectionCreate(d *schema.ResourceData, meta interface{}
 
 	d.SetId(aws.StringValue(output.VpcPeeringConnection.VpcPeeringConnectionId))
 
-	vpcPeeringConnection, err := WaitVPCPeeringConnectionActive(conn, d.Id(), d.Timeout(schema.TimeoutCreate))
+	// vpcPeeringConnection can be in the "ACTIVE" or "PENDING-ACCEPTANCE" state
+	vpcPeeringConnection, err := WaitVPCPeeringConnectionActiveOrPendingAcceptance(conn, d.Id(), d.Timeout(schema.TimeoutCreate))
 
 	if err != nil {
 		return fmt.Errorf("error waiting for EC2 VPC Peering Connection (%s) create: %w", d.Id(), err)
@@ -148,8 +149,12 @@ func resourceVPCPeeringConnectionCreate(d *schema.ResourceData, meta interface{}
 		}
 	}
 
-	if err := modifyVPCPeeringConnectionOptions(conn, d, vpcPeeringConnection, true); err != nil {
-		return err
+	// AWS API only allows modifying VPC peering connections that are "ACTIVE", otherwise the following error will be returned
+	// OperationNotPermitted: Peering pcx-xxxxxxxxxx is not active. Peering options can be added only to active peerings.
+	if aws.StringValue(vpcPeeringConnection.Status.Code) == ec2.VpcPeeringConnectionStateReasonCodeActive {
+		if err := modifyVPCPeeringConnectionOptions(conn, d, vpcPeeringConnection, true); err != nil {
+			return err
+		}
 	}
 
 	return resourceVPCPeeringConnectionRead(d, meta)
@@ -290,7 +295,7 @@ func acceptVPCPeeringConnection(conn *ec2.EC2, vpcPeeringConnectionID string, ti
 	}
 
 	// "OperationNotPermitted: Peering pcx-0000000000000000 is not active. Peering options can be added only to active peerings."
-	vpcPeeringConnection, err := WaitVPCPeeringConnectionActive(conn, vpcPeeringConnectionID, timeout)
+	vpcPeeringConnection, err := WaitVPCPeeringConnectionActiveOrPendingAcceptance(conn, vpcPeeringConnectionID, timeout)
 
 	if err != nil {
 		return nil, fmt.Errorf("error waiting for EC2 VPC Peering Connection (%s) update: %w", vpcPeeringConnectionID, err)

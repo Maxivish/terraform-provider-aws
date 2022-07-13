@@ -1,10 +1,13 @@
 package ds
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/directoryservice"
-	"github.com/hashicorp/aws-sdk-go-base/tfawserr"
+	"github.com/hashicorp/aws-sdk-go-base/v2/awsv1shim/v2/tfawserr"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 )
 
 func findDirectoryByID(conn *directoryservice.DirectoryService, id string) (*directoryservice.DirectoryDescription, error) {
@@ -26,14 +29,12 @@ func findDirectoryByID(conn *directoryservice.DirectoryService, id string) (*dir
 	}
 
 	if output == nil || len(output.DirectoryDescriptions) == 0 || output.DirectoryDescriptions[0] == nil {
-		return nil, &resource.NotFoundError{
-			Message:     "Empty result",
-			LastRequest: input,
-		}
+		return nil, tfresource.NewEmptyResultError(input)
 	}
 
-	// TODO Check for multiple results.
-	// TODO https://github.com/hashicorp/terraform-provider-aws/pull/17613.
+	if count := len(output.DirectoryDescriptions); count > 1 {
+		return nil, tfresource.NewTooManyResultsError(count, input)
+	}
 
 	directory := output.DirectoryDescriptions[0]
 
@@ -45,4 +46,36 @@ func findDirectoryByID(conn *directoryservice.DirectoryService, id string) (*dir
 	}
 
 	return directory, nil
+}
+
+func findSharedDirectoryByIDs(ctx context.Context, conn *directoryservice.DirectoryService, ownerDirectoryId string, sharedDirectoryId string) (*directoryservice.SharedDirectory, error) { // nosemgrep:ds-in-func-name
+	input := &directoryservice.DescribeSharedDirectoriesInput{
+		OwnerDirectoryId:   aws.String(ownerDirectoryId),
+		SharedDirectoryIds: []*string{aws.String(sharedDirectoryId)},
+	}
+
+	output, err := conn.DescribeSharedDirectoriesWithContext(ctx, input)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if output == nil || len(output.SharedDirectories) == 0 || output.SharedDirectories[0] == nil {
+		return nil, tfresource.NewEmptyResultError(input)
+	}
+
+	if count := len(output.SharedDirectories); count > 1 {
+		return nil, tfresource.NewTooManyResultsError(count, input)
+	}
+
+	sharedDirectory := output.SharedDirectories[0]
+
+	if status := aws.StringValue(sharedDirectory.ShareStatus); status == directoryservice.ShareStatusDeleted {
+		return nil, &resource.NotFoundError{
+			Message:     status,
+			LastRequest: input,
+		}
+	}
+
+	return sharedDirectory, nil
 }

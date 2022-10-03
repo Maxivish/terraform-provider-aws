@@ -35,6 +35,10 @@ func dataSourceActiveReceiptRuleSetRead(d *schema.ResourceData, meta interface{}
 	if err != nil {
 		return fmt.Errorf("reading SES Active Receipt Rule Set: %s", err)
 	}
+	if data == nil || data.Metadata == nil {
+		d.SetId("")
+		return nil
+	}
 
 	name := aws.StringValue(data.Metadata.Name)
 	d.SetId(name)
